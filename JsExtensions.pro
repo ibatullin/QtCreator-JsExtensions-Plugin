@@ -6,13 +6,15 @@ CONFIG += c++11
 
 # JsExtensions files
 
-SOURCES += JsExtensionsPlugin.cpp \
-        JepAPI.cpp
+SOURCES += \
+    jsextensionsplugin.cpp \
+    jepapi.cpp
 
-HEADERS += JsExtensionsPlugin.h \
-        JsExtensions_global.h \
-        JsExtensionsConstants.h \
-        JepAPI.h
+HEADERS += \
+    jsextensionsplugin.h \
+    jsextensionsconstants.h \
+    jsextensions_global.h \
+    jepapi.h
 
 # Qt Creator linking
 

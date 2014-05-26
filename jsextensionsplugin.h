@@ -5,8 +5,8 @@
 #include <QList>
 #include <QDir>
 
-#include "JsExtensions_global.h"
-#include "JepAPI.h"
+#include "jsextensions_global.h"
+#include "jepapi.h"
 
 namespace JsExtensions {
 namespace Internal {

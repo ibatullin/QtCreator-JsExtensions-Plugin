@@ -1,5 +1,5 @@
-#include "JsExtensionsPlugin.h"
-#include "JsExtensionsConstants.h"
+#include "jsextensionsplugin.h"
+#include "jsextensionsconstants.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/icontext.h>

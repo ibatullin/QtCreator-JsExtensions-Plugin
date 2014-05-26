@@ -1,4 +1,4 @@
-#include "JepAPI.h"
+#include "jepapi.h"
 #include <QMenu>
 #include <QAction>
 #include <QPushButton>
