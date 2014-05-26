@@ -38,13 +38,15 @@ public:
     bool trace() const { return m_trace; }
 
     QJSEngine* jsEngine() { return m_jsEngine.data(); }
-    bool loadPlugin(QString pluginPath, QString* errorString);
+    bool loadPlugin(QString pluginPath);
 
     void installJsContext(QJSEngine* jsEngine);
     void installQmlContext(QQmlEngine* qmlEngine);
 
     void changeDebugIndent(qint32 delta);
     QPair<QWidget*, QQuickView*> createQuickViewWidget(QString qmlUrl, QObject* parent);
+
+    QString errorString() const;
 
 public slots:
     bool loadAPI(QString libFileName);
@@ -64,10 +66,12 @@ public slots:
     void dumpCommands();
 
 private:
+    bool error(const QString &errorString);
     bool enableDebug();
 
     QScopedPointer<QJSEngine> m_jsEngine;
     QMap<QByteArray, std::function<QObject*(QObject*)>> m_factories;
+    QString m_errorString;
 
     // attributes
     qint32 m_order;

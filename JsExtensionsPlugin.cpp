@@ -47,12 +47,11 @@ void JsExtensionsPlugin::loadPlugins(const QDir& dir, QString* errorString)
         {
             // try to load plugin
             QScopedPointer<JsPlugin> jsPlugin(new JsPlugin(this));
-            QString pluginErrors;
-            if (!jsPlugin->loadPlugin(file.absoluteFilePath(), &pluginErrors))
+            if (!jsPlugin->loadPlugin(file.absoluteFilePath()))
             {
                 // save errors
                 *errorString += QChar::CarriageReturn;
-                *errorString += pluginErrors;
+                *errorString += jsPlugin->errorString();
             }
             else
             {
@@ -73,37 +72,30 @@ void JsExtensionsPlugin::invokePluginsFunction(QString functionName, bool option
         QJSEngine* engine  = plugin->jsEngine();
         Q_ASSERT(engine);
 
-        try
+        // try to find function
+        QJSValue res = engine->evaluate(functionName);
+        if (res.isError())
         {
-            // try to find function
-            QJSValue res = engine->evaluate(functionName);
-            if (res.isError())
-            {
-                if (!optional)
-                    plugin->debug(tr("Cannot find '%1' function.").arg(functionName));
-                continue;
-            }
-
-            // check functionName is a function
-            if (!res.isCallable())
-            {
-                plugin->debug(tr("'%1' is not a function.").arg(functionName));
-                continue;
-            }
-
-            GContext::TraceRecord trace(plugin, "", 0, functionName.toLatin1().data());
-
-            // invoke functionName function and check result
-            res = res.call();
-            if (res.isError())
-            {
-                plugin->debug(tr("'%1' function error: '%2'.").arg(functionName, res.toString()));
-                continue;
-            }
+            if (!optional)
+                plugin->debug(tr("Cannot find '%1' function.").arg(functionName));
+            continue;
         }
-        catch (...)
+
+        // check functionName is a function
+        if (!res.isCallable())
         {
-            plugin->debug(tr("Unhandeled exception while calling '%1' function.").arg(functionName));
+            plugin->debug(tr("'%1' is not a function.").arg(functionName));
+            continue;
+        }
+
+        GContext::TraceRecord trace(plugin, "", 0, functionName.toLatin1().data());
+
+        // invoke functionName function and check result
+        res = res.call();
+        if (res.isError())
+        {
+            plugin->debug(tr("'%1' function error: '%2'.").arg(functionName, res.toString()));
+            continue;
         }
     }
 }

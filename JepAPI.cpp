@@ -75,75 +75,53 @@ public:
     QString error;
 };
 
-bool JsPlugin::loadPlugin(QString pluginPath, QString* errorString)
+bool JsPlugin::loadPlugin(QString pluginPath)
 {
     if (!m_jsEngine.isNull())
+        return error("JepAPI is initialized already.");
+
+    // save plugin path and name
+    m_pluginPath = pluginPath;
+    m_pluginName = QFileInfo(m_pluginPath).fileName();
+
+    // open plugin file
+    QFile scriptFile(pluginPath);
+    if (!scriptFile.open(QIODevice::ReadOnly))
+        return error("Cannot open file.");
+
+    // read script
+    QTextStream stream(&scriptFile);
+    QString contents = stream.readAll();
+    scriptFile.close();
+
+    // prepare java script engine
+    m_jsEngine.reset(new QJSEngine());
+    installJsContext(m_jsEngine.data());
+
+    // load script
+    QJSValue res = m_jsEngine->evaluate(contents, pluginPath);
+    if (res.isError())
+        return error(QString("Script error: '%1'.").arg(res.toString()));
+
+    // try to find "pluginDisable" variable
+    res = m_jsEngine->evaluate("pluginDisable");
+    if (res.isBool())
     {
-        *errorString = "JepAPI is initialized already.";
-        return false;
+        m_isDisabled = res.toBool();
     }
 
-    try
+    // try to find "pluginOrder" variable
+    res = m_jsEngine->evaluate("pluginOrder");
+    if (res.isNumber())
     {
-        // save plugin path and name
-        m_pluginPath = pluginPath;
-        m_pluginName = QFileInfo(m_pluginPath).fileName();
-
-        // open plugin file
-        QFile scriptFile(pluginPath);
-        if (!scriptFile.open(QIODevice::ReadOnly))
-        {
-            throw JepAPIException("Cannot open file.");
-        }
-
-        // read script
-        QTextStream stream(&scriptFile);
-        QString contents = stream.readAll();
-        scriptFile.close();
-
-        // prepare java script engine
-        m_jsEngine.reset(new QJSEngine());
-        installJsContext(m_jsEngine.data());
-
-        // load script
-        QJSValue res = m_jsEngine->evaluate(contents, pluginPath);
-        if (res.isError())
-        {
-            throw JepAPIException(QString("Script error: '%1'.").arg(res.toString()));
-        }
-
-        // try to find "pluginDisable" variable
-        res = m_jsEngine->evaluate("pluginDisable");
-        if (res.isBool())
-        {
-            m_isDisabled = res.toBool();
-        }
-
-        // try to find "pluginOrder" variable
-        res = m_jsEngine->evaluate("pluginOrder");
-        if (res.isNumber())
-        {
-            m_order = res.toInt();
-        }
-
-        // try to find "pluginTrace" variable
-        res = m_jsEngine->evaluate("pluginTrace");
-        if (res.isBool())
-        {
-            m_trace = res.toBool();
-        }
+        m_order = res.toInt();
     }
-    catch (const JepAPIException& exception)
+
+    // try to find "pluginTrace" variable
+    res = m_jsEngine->evaluate("pluginTrace");
+    if (res.isBool())
     {
-        *errorString = QString("%1\nScript file: '%2'").arg(exception.error, pluginPath);
-        m_jsEngine.reset();
-        return false;
-    }
-    catch (...)
-    {
-        *errorString = QString("Unhandled exception in plugin '%1'.").arg(pluginPath);
-        m_jsEngine.reset();
-        return false;
+        m_trace = res.toBool();
     }
 
     return true;
@@ -256,6 +234,11 @@ QPair<QWidget*, QQuickView*> JsPlugin::createQuickViewWidget(QString qmlUrl, QOb
     return result;
 }
 
+QString JsPlugin::errorString() const
+{
+    return m_errorString;
+}
+
 QJSValue JsPlugin::createQuickView(QString qmlUrl, QObject* parent)
 {
     G_TRACE2(this);
@@ -358,6 +341,11 @@ void JsPlugin::dumpCommands()
     }
 }
 
+bool JsPlugin::error(const QString &errorString)
+{
+    m_errorString = QString("%1\nScript file: '%2'").arg(errorString, m_pluginPath);
+    return false;
+}
 
 bool JsPlugin::loadAPI(QString libFileName)
 {
