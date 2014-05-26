@@ -106,23 +106,17 @@ bool JsPlugin::loadPlugin(QString pluginPath)
     // try to find "pluginDisable" variable
     res = m_jsEngine->evaluate("pluginDisable");
     if (res.isBool())
-    {
         m_isDisabled = res.toBool();
-    }
 
     // try to find "pluginOrder" variable
     res = m_jsEngine->evaluate("pluginOrder");
     if (res.isNumber())
-    {
         m_order = res.toInt();
-    }
 
     // try to find "pluginTrace" variable
     res = m_jsEngine->evaluate("pluginTrace");
     if (res.isBool())
-    {
         m_trace = res.toBool();
-    }
 
     return true;
 }
@@ -200,22 +194,16 @@ QPair<QWidget*, QQuickView*> JsPlugin::createQuickViewWidget(QString qmlUrl, QOb
 
     // make absolute file path related to plugin dir
     QFileInfo fi(QFileInfo(m_pluginPath).absolutePath(), qmlUrl);
-    if (fi.isFile())
-    {
+    if (fi.isFile()) {
         qmlUrl = fi.absoluteFilePath();
         view->setSource(QUrl::fromLocalFile(qmlUrl));
-    }
-    else
-    {
+    } else {
         view->setSource(QUrl(qmlUrl));
     }
 
-    if (view->status() == QQuickView::Error)
-    {
+    if (view->status() == QQuickView::Error) {
         foreach (const QQmlError& error, view->errors())
-        {
             debug(error.toString());
-        }
 
         return result;
     }
@@ -281,30 +269,21 @@ Core::NavigationView GNavigationWidgetFactory::createWidget()
     Core::NavigationView nv;
     nv.widget = nullptr;
 
-    if (m_factory.isString())
-    {
+    if (m_factory.isString()) {
         // try load QML view
         QPair<QWidget*, QQuickView*> result = m_owner->createQuickViewWidget(m_factory.toString(), this);
         nv.widget = result.first;
 
         result.second->setResizeMode(QQuickView::SizeRootObjectToView);
-    }
-    else if (m_factory.isCallable())
-    {
+    } else if (m_factory.isCallable()) {
         // try call factory
         QJSValue res = m_factory.call();
         if (res.isQObject())
-        {
             nv.widget = qobject_cast<QWidget*>(res.toQObject());
-        }
 
         if (!nv.widget)
-        {
             m_owner->debug("NavigationWidgetFactory: function doesn't return QWidget*.");
-        }
-    }
-    else
-    {
+    } else {
         m_owner->debug("NavigationWidgetFactory: factory is not string or function.");
     }
 
@@ -326,9 +305,7 @@ void JsPlugin::dumpPluginManagerObjects()
     QList<QObject*> objects = ExtensionSystem::PluginManager::allObjects();
     int i = 0;
     foreach (QObject* obj, objects)
-    {
         debug(QString("%1: %2 (%3)").arg(i++).arg(obj->objectName()).arg(obj->metaObject()->className()));
-    }
 }
 
 void JsPlugin::dumpCommands()
@@ -336,9 +313,7 @@ void JsPlugin::dumpCommands()
     QList<Core::Command*> commands = Core::ActionManager::commands();
     int i = 0;
     foreach (Core::Command* cmd, commands)
-    {
         debug(QString("%1: <%2> (%3)").arg(i++).arg(cmd->id().toString()).arg(cmd->description()));
-    }
 }
 
 bool JsPlugin::error(const QString &errorString)
@@ -363,16 +338,14 @@ bool JsPlugin::loadAPI(QString libFileName)
     typedef bool (*LoadAPIFunction)(QJSEngine*, QString*);
 
     LoadAPIFunction loadAPIFunc = (LoadAPIFunction)library.resolve("loadAPI");
-    if (!loadAPIFunc)
-    {
+    if (!loadAPIFunc) {
         debug(tr("Cannot resolve 'loadAPI' function."));
         library.unload();
         return false;
     }
 
     QString errors;
-    if (!loadAPIFunc(m_jsEngine.data(), &errors))
-    {
+    if (!loadAPIFunc(m_jsEngine.data(), &errors)) {
         debug(tr("'loadAPI' function failed (%1).").arg(errors));
         library.unload();
         return false;
@@ -391,8 +364,7 @@ bool JsPlugin::enableDebug()
 
     QFile* file(new QFile(this));
     file->setFileName(m_pluginPath + tr(".log"));
-    if (!file->open(QIODevice::WriteOnly))
-    {
+    if (!file->open(QIODevice::WriteOnly)) {
         delete file;
         return false;
     }
@@ -407,8 +379,7 @@ void JsPlugin::debug(QString str)
 
     enableDebug();
 
-    if (m_debugStream)
-    {
+    if (m_debugStream) {
         QString indent(m_debugIndent, QChar::Space);
         *m_debugStream << indent << str << endl;
     }

@@ -34,32 +34,24 @@ JsExtensionsPlugin::~JsExtensionsPlugin()
 void JsExtensionsPlugin::loadPlugins(const QDir& dir, QString* errorString)
 {
     QFileInfoList files = dir.entryInfoList(QDir::NoDotAndDotDot|QDir::Files|QDir::Dirs, QDir::DirsFirst);
-    foreach (const QFileInfo &file, files)
-    {
-        if (file.isDir())
-        {
+    foreach (const QFileInfo &file, files) {
+        if (file.isDir()) {
             // process sub dirs
             loadPlugins(QDir(file.filePath()), errorString);
             continue;
         }
 
-        if (file.isFile() && (file.completeSuffix() == jepPluginSuffix))
-        {
+        if (file.isFile() && (file.completeSuffix() == jepPluginSuffix)) {
             // try to load plugin
             QScopedPointer<JsPlugin> jsPlugin(new JsPlugin(this));
-            if (!jsPlugin->loadPlugin(file.absoluteFilePath()))
-            {
+            if (!jsPlugin->loadPlugin(file.absoluteFilePath())) {
                 // save errors
                 *errorString += QChar::CarriageReturn;
                 *errorString += jsPlugin->errorString();
-            }
-            else
-            {
+            } else {
                 if (!jsPlugin->isDisabled())
-                {
                     // save plugin
                     m_plugins.append(jsPlugin.take());
-                }
             }
         }
     }
@@ -67,23 +59,20 @@ void JsExtensionsPlugin::loadPlugins(const QDir& dir, QString* errorString)
 
 void JsExtensionsPlugin::invokePluginsFunction(QString functionName, bool optional)
 {
-    foreach (JsPlugin *plugin, m_plugins)
-    {
+    foreach (JsPlugin *plugin, m_plugins) {
         QJSEngine* engine  = plugin->jsEngine();
         Q_ASSERT(engine);
 
         // try to find function
         QJSValue res = engine->evaluate(functionName);
-        if (res.isError())
-        {
+        if (res.isError()) {
             if (!optional)
                 plugin->debug(tr("Cannot find '%1' function.").arg(functionName));
             continue;
         }
 
         // check functionName is a function
-        if (!res.isCallable())
-        {
+        if (!res.isCallable()) {
             plugin->debug(tr("'%1' is not a function.").arg(functionName));
             continue;
         }
@@ -92,8 +81,7 @@ void JsExtensionsPlugin::invokePluginsFunction(QString functionName, bool option
 
         // invoke functionName function and check result
         res = res.call();
-        if (res.isError())
-        {
+        if (res.isError()) {
             plugin->debug(tr("'%1' function error: '%2'.").arg(functionName, res.toString()));
             continue;
         }
@@ -126,14 +114,12 @@ bool JsExtensionsPlugin::initialize(const QStringList &arguments, QString *error
 
     // search and load jep plugins
     QDir pluginsDir(pluginSpec()->location());
-    if (!pluginsDir.exists())
-    {
+    if (!pluginsDir.exists()) {
         *errorString = tr("Plugin dir doesn't exist.");
         return false;
     }
 
-    if (!pluginsDir.cd("jep_plugins"))
-    {
+    if (!pluginsDir.cd("jep_plugins")) {
         *errorString = tr("'jep_plugins' sub-dir doesn't exist.");
         return false;
     }
@@ -141,12 +127,9 @@ bool JsExtensionsPlugin::initialize(const QStringList &arguments, QString *error
     loadPlugins(pluginsDir, errorString);
 
     if (!errorString->isEmpty())
-    {
         return false;
-    }
 
-    if (m_plugins.isEmpty())
-    {
+    if (m_plugins.isEmpty()) {
         *errorString += tr("\nCannot find any jep plugin in '%1'.").arg(pluginsDir.absolutePath());
         return false;
     }

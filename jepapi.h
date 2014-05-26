@@ -103,8 +103,7 @@ struct GContext
             : plugin(plugin)
         {
             Q_ASSERT(plugin);
-            if (plugin->trace())
-            {
+            if (plugin->trace()) {
                 record = QString("%1 : %2 : %3").arg(file).arg(line).arg(func);
 
                 plugin->debug(QString("Start : ") + record);
@@ -114,8 +113,7 @@ struct GContext
 
         ~TraceRecord()
         {
-            if (plugin->trace())
-            {
+            if (plugin->trace()) {
                 plugin->changeDebugIndent(-4);
                 plugin->debug(QString("End   : ") + record);
             }
@@ -339,12 +337,9 @@ public slots:
     {
         G_TRACE;
         QString errors;
-        if (m_owner->autoSave(&errors, filePath))
-        {
+        if (m_owner->autoSave(&errors, filePath)) {
             return QJSValue(true);
-        }
-        else
-        {
+        } else {
             qDebug("%s", errors.toLatin1().data());
             return QJSValue(false);
         }
@@ -458,9 +453,7 @@ public slots:
         QJSValue array = m_gContext.jsEngine->newArray(documents.size());
 
         for (quint32 i = 0; i < (quint32)documents.size(); ++i)
-        {
             array.setProperty(i, m_gContext.jsEngine->newQObject(new GDocument(m_gContext, documents[i])));
-        }
 
         return array;
     }
